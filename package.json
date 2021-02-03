@@ -5,7 +5,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "postinstall": "cd ./reactapp && npm install",
     "heroku-postbuild": "cd reactapp && npm install && npm run build"
   },
   "author": "Hamed Diaby Koumba",
