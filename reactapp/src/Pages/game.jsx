@@ -3,8 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Peer from "simple-peer";
 
 import { connect } from 'react-redux';
-import socketIOClient from "socket.io-client";
-var socket = socketIOClient("http://localhost:8000/");
+import io from "socket.io-client";
 
 const videoConstraints = {
     height: window.innerHeight / 2,
@@ -33,23 +32,23 @@ function Game({getUserInfos}) {
     const socketRef = useRef();
     const peersRef = useRef([]);
     const roomID = getUserInfos.roomID;
-    const userID = socket.id;
     const userPseudo = getUserInfos.pseudo;
 
     useEffect(()=> {
 
+        socketRef.current = io.connect("/");
         navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: true }).then(stream => {
             const videoElement = document.querySelector('video#localVideo');
             videoElement.srcObject = stream;
             videoElement.muted = true;
             videoElement.play();
 
-            socket.emit('joinRoom', {userName: userPseudo, roomId: roomID});
-            socket.on('roomUserList', userList=> {
+            socketRef.current.emit('joinRoom', {userName: userPseudo, roomId: roomID});
+            socketRef.current.on('roomUserList', userList=> {
                 const peers = [];
                 userList.userList.map(data=> {
-                    if(data.id != userID){
-                        const peer = createPeer(data.id, userID, stream);
+                    if(data.id != socketRef.current.id){
+                        const peer = createPeer(data.id, socketRef.current.id, stream);
                         peersRef.current.push({
                             peerID: data.id,
                             peer,
@@ -60,7 +59,7 @@ function Game({getUserInfos}) {
                 setPeers(peers);
             });
 
-            socket.on("user joined", payload => {
+            socketRef.current.on("user joined", payload => {
                 const peer = addPeer(payload.signal, payload.callerID, stream);
                 peersRef.current.push({
                     peerID: payload.callerID,
@@ -70,7 +69,7 @@ function Game({getUserInfos}) {
                 setPeers(users => [...users, peer]);
             });
 
-            socket.on("receiving returned signal", payload => {
+            socketRef.current.on("receiving returned signal", payload => {
                 const item = peersRef.current.find(p => p.peerID === payload.id);
                 item.peer.signal(payload.signal);
             });
@@ -87,7 +86,7 @@ function Game({getUserInfos}) {
         });
 
         peer.on("signal", signal => {
-            socket.emit("sending signal", { userToSignal, callerID, signal })
+            socketRef.current.emit("sending signal", { userToSignal, callerID, signal })
         })
 
         return peer;
@@ -101,7 +100,7 @@ function Game({getUserInfos}) {
         })
 
         peer.on("signal", signal => {
-            socket.emit("returning signal", { signal, callerID })
+            socketRef.current.emit("returning signal", { signal, callerID })
         })
 
         peer.signal(incomingSignal);
@@ -117,7 +116,7 @@ function Game({getUserInfos}) {
         />
         {
             peers.map((peer, index) => {
-                if(peer.id != userID) {
+                if(peer.id != socketRef.current.id) {
                     return <CreatePeerVideo peer={peer} />;
                 }
             })
