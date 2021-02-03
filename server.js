@@ -2,12 +2,6 @@ require('dotenv').config();
 const express = require("express");
 const http = require("http");
 const app = express();
-
-app.use(express.static(path.join(__dirname, 'reactapp/build')));
-app.get('*', function(req, res) {
-    res.sendFile(path.join(__dirname, 'reactapp/build', 'index.html'));
-});
-
 const server = http.createServer(app);
 const socket = require("socket.io");
 const io = socket(server, { 
