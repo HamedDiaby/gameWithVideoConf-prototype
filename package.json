@@ -2,7 +2,7 @@
   "name": "action-verite",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node server.js",
     "heroku-postbuild": "cd reactapp && npm install && npm run build"
