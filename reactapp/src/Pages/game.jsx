@@ -19,11 +19,8 @@ var CreatePeerVideo = ({peer})=> {
             console.log(stream)
             ref.current.srcObject = stream;
             ref.current.play();
-            // peerVideo.srcObject = stream;
-            // peerVideo.play();
         });
     }, []);
-    // console.log(peerVideo)
 
     return (
         <video ref={ref} style={{width: 200, height: 200}} />
