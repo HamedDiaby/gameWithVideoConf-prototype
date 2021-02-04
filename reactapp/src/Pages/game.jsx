@@ -115,7 +115,7 @@ function Game({getUserInfos}) {
             style={{width: 200, height: 200}}
         />
         {
-            peers.map((peer, index) => {
+            peers.map(peer=> {
                 if(peer.id != socketRef.current.id) {
                     return <CreatePeerVideo peer={peer} />;
                 }
