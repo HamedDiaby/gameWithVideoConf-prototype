@@ -15,11 +15,13 @@ var CreatePeerVideo = ({peer})=> {
 
     useEffect(() => {
         peer.on("stream", stream => {
-            console.log(stream)
+            // console.log(stream)
             ref.current.srcObject = stream;
             ref.current.play();
         });
     }, []);
+
+    // console.log('++++++++++++++++++++++++++>', peer)
 
     return (
         <video ref={ref} style={{width: 200, height: 200}} />
@@ -29,6 +31,7 @@ var CreatePeerVideo = ({peer})=> {
 function Game({getUserInfos}) {
 
     const [peers, setPeers] = useState([]);
+    const [userlist, setUserlist] = useState([]);
     const socketRef = useRef();
     const peersRef = useRef([]);
     const roomID = getUserInfos.roomID;
@@ -45,28 +48,33 @@ function Game({getUserInfos}) {
 
             socketRef.current.emit('joinRoom', {userName: userPseudo, roomId: roomID});
             socketRef.current.on('roomUserList', userList=> {
+                // setUserlist(userList);
                 const peers = [];
                 userList.userList.map(data=> {
                     if(data.id != socketRef.current.id){
                         const peer = createPeer(data.id, socketRef.current.id, stream);
+                        // console.log('====== createPeer ======', peer);
                         peersRef.current.push({
                             peerID: data.id,
                             peer,
                         })
-                        peers.push(peer);
+                        peers.push({peer: peer, userID: data.id});
+                        // console.log('====== 1 ======', peers);
                     }
                 });
+                // console.log('====== 1 ======', peers);
                 setPeers(peers);
             });
 
             socketRef.current.on("user joined", payload => {
                 const peer = addPeer(payload.signal, payload.callerID, stream);
+                // console.log('====== addPeer ======', peer);
                 peersRef.current.push({
                     peerID: payload.callerID,
                     peer,
                 })
 
-                setPeers(users => [...users, peer]);
+                setPeers(users => [...users, {peer: peer, userID: payload.callerID}]);
             });
 
             socketRef.current.on("receiving returned signal", payload => {
@@ -75,6 +83,10 @@ function Game({getUserInfos}) {
             });
 
         });
+
+        socketRef.current.on('userList', userList=> {
+            setUserlist(userList.userList);
+        })
 
     }, []);
 
@@ -108,16 +120,27 @@ function Game({getUserInfos}) {
         return peer;
     }
 
+    // console.log('====== 2 ======', peers);
+
   return (
-    <div>
+    <div style={{padding: 20, display: 'grid'}}>
         {roomID}
-        <video id="localVideo"
-            style={{width: 200, height: 200}}
-        />
+        <div>
+            <p style={{fontWeight: '600', color: 'blue'}}>{userPseudo}</p>
+            <video id="localVideo"
+                style={{width: 200, height: 200}}
+            />
+        </div>
         {
-            peers.map(peer=> {
-                if(peer.id != socketRef.current.id) {
-                    return <CreatePeerVideo peer={peer} />;
+            peers.map((data, i)=> {
+                if(userlist.length > 0){
+                    var gest = userlist.find(user=> user.id == data.userID);
+                    if(gest){
+                        return  <div>
+                                    <p style={{fontWeight: '600', color: 'green'}}>{gest && gest.userName}</p>
+                                    <CreatePeerVideo key={i} peer={data.peer} />
+                                </div>;
+                    }
                 }
             })
         }
