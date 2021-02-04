@@ -63,13 +63,17 @@ io.on('connection', (socket) => {
       const user = userJoin(socket.id, userName, roomId);
       socket.join(user.roomId);
   
-      socket.broadcast
-      .to(user.roomId)
-      .emit('userJoinedTheGame', 
-        formatAction("Hamed's BOT", `${user.userName} joined the game !`)
-      );
+    //   socket.broadcast
+    //   .to(user.roomId)
+    //   .emit('userJoinedTheGame', 
+    //     formatAction("Hamed's BOT", `${user.userName} joined the game !`)
+    //   );
   
-      io.to(user.roomId).emit('roomUserList', {
+      socket.emit('roomUserList', {
+        roomId: user.roomId,
+        userList: getRoomUsersList(user.roomId)
+      });
+      io.to(user.roomId).emit('userList', {
         roomId: user.roomId,
         userList: getRoomUsersList(user.roomId)
       });
@@ -88,9 +92,13 @@ io.on('connection', (socket) => {
       if(user){
         io.to(user.roomId).emit('userLeftTheGame', formatAction("Hamed's BOT", `${user.userName} left the game !`));
       
-        io.to(user.roomId).emit('roomUserList', {
-          roomId: user.roomId,
-          userList: getRoomUsersList(user.roomId)
+        // socket.emit('roomUserList', {
+        //   roomId: user.roomId,
+        //   userList: getRoomUsersList(user.roomId)
+        // });
+        io.to(user.roomId).emit('userList', {
+            roomId: user.roomId,
+            userList: getRoomUsersList(user.roomId)
         });
       }
     });
